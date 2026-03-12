@@ -1,59 +1,63 @@
 import feedparser
+import re
+import os
 import json
-from datetime import datetime
+import hashlib
+import firebase_admin
+from firebase_admin import credentials, firestore
 
-# Feeds tailored for EditorInspo
+# Connect to Firebase securely using the GitHub Secret
+cert_dict = json.loads(os.environ.get('FIREBASE_CREDENTIALS'))
+cred = credentials.Certificate(cert_dict)
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
 SOURCES = [
-    # YouTube feeds use the channel ID
     {"name": "Video Copilot", "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCw9S4RDEE7n71jY_RkY70Lw", "type": "tutorial"},
     {"name": "School of Motion", "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCz22I74rW2cwe-0bQ-O20YQ", "type": "tutorial"},
     {"name": "Lesterbanks", "url": "https://lesterbanks.com/feed/", "type": "inspiration"}
 ]
 
-def fetch_content():
-    items = []
+def fetch_and_upload():
+    count = 0
     for source in SOURCES:
         try:
             feed = feedparser.parse(source["url"])
-            for entry in feed.entries[:3]: # Grab top 3 latest posts from each
+            for entry in feed.entries[:5]: # Grab latest 5
                 
-                # Extract thumbnail automatically
                 thumbnail = ""
-                if "media_thumbnail" in entry:
+                if "media_thumbnail" in entry and len(entry.media_thumbnail) > 0:
                     thumbnail = entry.media_thumbnail[0]["url"]
-                    
-                # Extract tags automatically, fallback to defaults
-                tags = []
-                if "tags" in entry:
-                    tags = [tag.term.lower() for tag in entry.tags][:2]
-                if not tags:
-                    tags = ["after effects", "editing"]
-
+                elif "media_content" in entry and len(entry.media_content) > 0:
+                    thumbnail = entry.media_content[0]["url"]
+                
+                if not thumbnail:
+                    html_text = entry.get("content", [{"value": ""}])[0].get("value", "") + entry.get("summary", "")
+                    img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', html_text)
+                    if img_match: thumbnail = img_match.group(1)
+                        
+                tags = [tag.term.lower() for tag in entry.get("tags", [])][:2] if "tags" in entry else ["after effects", "editing"]
+                url = entry.get("link", "")
+                
                 item = {
-                    "id": entry.get("id", entry.get("link", "")),
                     "title": entry.get("title", ""),
-                    "url": entry.get("link", ""),
+                    "url": url,
                     "type": source["type"],
                     "tags": tags,
                     "thumbnail": thumbnail,
-                    "source": source["name"]
+                    "source": source["name"],
+                    "timestamp": firestore.SERVER_TIMESTAMP # Marks exact time added
                 }
-                items.append(item)
+                
+                # Create a safe, unique ID based on the URL to prevent duplicates
+                doc_id = hashlib.md5(url.encode()).hexdigest()
+                
+                # Push to Firestore collection named 'content'
+                db.collection('content').document(doc_id).set(item, merge=True)
+                count += 1
         except Exception as e:
             print(f"Error fetching {source['name']}: {e}")
-            
-    return items
+    return count
 
 if __name__ == "__main__":
-    new_items = fetch_content()
-    
-    # Structure matches your Android ContentResponse
-    output = {
-        "lastUpdated": datetime.utcnow().strftime("%Y-%m-%d"),
-        "items": new_items
-    }
-
-    with open("content.json", "w") as f:
-        json.dump(output, f, indent=2)
-        
-    print(f"Successfully wrote {len(new_items)} items to content.json.")
+    print(f"Uploaded {fetch_and_upload()} items to Firebase!")
