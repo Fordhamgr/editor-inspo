@@ -1,4 +1,5 @@
 import feedparser
+import requests
 import re
 import os
 import json
@@ -15,7 +16,6 @@ SOURCES = [
     {"name": "Video Copilot", "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCw9S4RDEE7n71jY_RkY70Lw", "type": "tutorials"},
     {"name": "School of Motion", "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCz22I74rW2cwe-0bQ-O20YQ", "type": "tutorials"},
     {"name": "Film Riot", "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC6P24bhhCmMqcC07VeqJZqw", "type": "tutorials"}
-    # Note: I removed the REPLACE_ME channels for now so they don't cause 404 errors!
 ]
 
 TAG_KEYWORDS = {
@@ -32,27 +32,32 @@ TAG_KEYWORDS = {
 
 def fetch_and_upload():
     count = 0
+    # The disguise: makes YouTube think this is a normal person on Chrome
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+    
     for source in SOURCES:
         try:
             print(f"Fetching from {source['name']}...")
-            feed = feedparser.parse(source["url"])
+            response = requests.get(source["url"], headers=headers)
+            feed = feedparser.parse(response.content)
+            
+            if len(feed.entries) == 0:
+                print(f"  -> WARNING: 0 videos found. HTTP Status: {response.status_code}")
+                continue
             
             for entry in feed.entries[:5]:
-                # 1. Safely extract YouTube thumbnail
                 thumbnail = ""
                 if "media_thumbnail" in entry and len(entry.media_thumbnail) > 0:
                     thumbnail = entry.media_thumbnail[0]["url"]
                 elif "media_content" in entry and len(entry.media_content) > 0:
                     thumbnail = entry.media_content[0]["url"]
                 
-                # 2. Safely extract text (YouTube puts descriptions in 'summary')
                 title = entry.get("title", "Untitled")
                 html_text = entry.get("summary", "")
                 
                 if "content" in entry and isinstance(entry.content, list) and len(entry.content) > 0:
                     html_text += entry.content[0].get("value", "")
                 
-                # 3. Auto-tagging engine
                 text_to_scan = (title + " " + html_text).lower()
                 tags = set([source["type"]]) 
                 for keyword, tag in TAG_KEYWORDS.items():
@@ -60,7 +65,7 @@ def fetch_and_upload():
                         tags.add(tag)
                 
                 url = entry.get("link", "")
-                if not url: continue # Skip if no link exists
+                if not url: continue
                 
                 item = {
                     "title": title,
@@ -72,7 +77,6 @@ def fetch_and_upload():
                     "timestamp": firestore.SERVER_TIMESTAMP
                 }
                 
-                # Push to Firebase
                 doc_id = hashlib.md5(url.encode()).hexdigest()
                 db.collection('content').document(doc_id).set(item, merge=True)
                 count += 1
