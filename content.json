@@ -1,23 +1,41 @@
 {
-  "lastUpdated": "2025-04-01",
+  "lastUpdated": "2026-03-12",
   "items": [
     {
-      "id": "1",
-      "title": "Advanced Color Grading in DaVinci Resolve",
-      "url": "https://youtu.be/3g8TA5n92Bs?si=keTfiFQuPcIQTpEt",
-      "type": "tutorial",
-      "tags": ["color grading", "davinci resolve"],
-      "thumbnail": "https://img.youtube.com/vi/.../0.jpg",
-      "source": "YouTube"
+      "id": "https://lesterbanks.com/?p=69129",
+      "title": "21 Martyrs: An Inside Look",
+      "url": "https://lesterbanks.com/2025/01/21-martyrs-an-inside-look/",
+      "type": "inspiration",
+      "tags": [
+        "short films",
+        "mandi hart"
+      ],
+      "thumbnail": "",
+      "source": "Lesterbanks"
     },
     {
-      "id": "2",
-      "title": "Free Retro Font Pack",
-      "url": "https://fontwebsite.com/retro-pack",
-      "type": "font",
-      "tags": ["fonts", "retro"],
-      "thumbnail": "https://.../preview.jpg",
-      "source": "Font Squirrel"
+      "id": "https://lesterbanks.com/?p=68929",
+      "title": "Siggraph Asia 2024",
+      "url": "https://lesterbanks.com/2024/12/siggraph-asia-2024/",
+      "type": "inspiration",
+      "tags": [
+        "3d",
+        "animation"
+      ],
+      "thumbnail": "",
+      "source": "Lesterbanks"
+    },
+    {
+      "id": "https://lesterbanks.com/?p=68922",
+      "title": "Working With the Light Mixer LOP in Houdini 20",
+      "url": "https://lesterbanks.com/2024/05/working-with-the-light-mixer-lop-in-houdini-20/",
+      "type": "inspiration",
+      "tags": [
+        "houdini",
+        "houdini tutorial"
+      ],
+      "thumbnail": "",
+      "source": "Lesterbanks"
     }
   ]
 }
