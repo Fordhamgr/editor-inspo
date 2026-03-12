@@ -1,0 +1,23 @@
+{
+  "lastUpdated": "2025-04-01",
+  "items": [
+    {
+      "id": "1",
+      "title": "Advanced Color Grading in DaVinci Resolve",
+      "url": "https://youtube.com/watch?v=...",
+      "type": "tutorial",
+      "tags": ["color grading", "davinci resolve"],
+      "thumbnail": "https://img.youtube.com/vi/.../0.jpg",
+      "source": "YouTube"
+    },
+    {
+      "id": "2",
+      "title": "Free Retro Font Pack",
+      "url": "https://fontwebsite.com/retro-pack",
+      "type": "font",
+      "tags": ["fonts", "retro"],
+      "thumbnail": "https://.../preview.jpg",
+      "source": "Font Squirrel"
+    }
+  ]
+}
